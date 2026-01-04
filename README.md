@@ -17,11 +17,19 @@ Este tutorial mostra **como configurar IP fixo e DNS manualmente no Ubuntu Serve
 
 ## 🔍 1. Identificar a interface de rede
 
+# Verificar o status do NetworkManager
+sudo systemctl status NetworkManager
+
+# Verificar o status do systemd-networkd
+sudo systemctl status systemd-networkd
+
+O serviço que estiver ativo (running) é o responsável pelo gerenciamento da interface de rede. 
+
+ls /etc/netplan/
+
 Execute:
 
-bash
 ip a
-
 
 Você verá algo semelhante a:
 
@@ -37,9 +45,7 @@ Você verá algo semelhante a:
 
 Liste os arquivos disponíveis:
 
-bash
 ls /etc/netplan/
-
 
 Normalmente o arquivo será algo como:
 
@@ -47,11 +53,9 @@ Normalmente o arquivo será algo como:
 
 Edite o arquivo:
 
-bash
 sudo nano /etc/netplan/00-installer-config.yaml
 
-
----
+--
 
 ## ✍️ 3. Configuração de IP Fixo + DNS Manual
 
@@ -96,9 +100,8 @@ sudo netplan apply
 
 Para depuração:
 
-bash
-sudo netplan apply --debug
 
+sudo netplan apply --debug
 
 ---
 
@@ -106,17 +109,14 @@ sudo netplan apply --debug
 
 ### 📡 Verificar IP configurado
 
-bash
 ip a
-
 
 ---
 
 ### 🌐 Testar conectividade com o gateway
 
-bash
-ping 172.16.0.254
 
+ping 172.16.0.254
 
 ---
 
@@ -125,14 +125,11 @@ ping 172.16.0.254
 bash
 ping google.com
 
-
 ---
 
 ### 🔎 Verificar DNS ativos
 
-bash
 resolvectl status
-
 
 ---
 
