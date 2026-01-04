@@ -1,57 +1,51 @@
-## 📘 README.md — Configuração de IP Estático no Ubuntu Server
+# 🖧 Configuração de IP Fixo e DNS Manual no Ubuntu Server 24.04
 
-markdown
-# 🌐 Configuração de IP Estático no Ubuntu Server
-
-Guia completo e direto ao ponto para **visualizar, editar e configurar IP fixo** em servidores Ubuntu.
+Este tutorial mostra **como configurar IP fixo e DNS manualmente no Ubuntu Server 24.04**, **sem interface gráfica**, utilizando o **Netplan**. Ideal para ambientes de servidor, laboratórios e redes internas.
 
 ---
 
-## 🧭 1️⃣ Verificando as configurações de rede atuais
+## 📌 Cenário
 
-### 🔹 Listar interfaces e endereços IP
-bash
-ip addr show
+| Item      | Valor                                     |
+| --------- | ----------------------------------------- |
+| IPs Fixos | 172.16.0.253 e 172.16.0.254           |
+| Máscara   | /24 (255.255.255.0)                   |
+| Gateway   | 172.16.0.254                            |
+| DNS       | 172.16.0.254, 172.16.0.253, 8.8.8.8 |
 
+---
 
-ou simplesmente:
+## 🔍 1. Identificar a interface de rede
+
+Execute:
 
 bash
 ip a
 
 
-### 🔹 Mostrar rotas e gateway
+Você verá algo semelhante a:
 
-bash
-ip route show
+* enp0s3
+* ens33
+* eth0
 
-
-### 🔹 Listar interfaces de rede
-
-bash
-ls /sys/class/net/
-
-
-*(Use isso para descobrir o nome da interface, como ens33, eth0, enp0s3, etc.)*
+> 📌 **Anote o nome da interface**, pois será usado no arquivo de configuração.
 
 ---
 
-## ⚙️ 2️⃣ Editando as configurações do Netplan
+## 🗂️ 2. Localizar o arquivo do Netplan
 
-No Ubuntu Server (18.04 ou superior), a rede é configurada via **Netplan**.
-Os arquivos de configuração ficam em:
+Liste os arquivos disponíveis:
 
-
-/etc/netplan/
-
-
-Exemplo comum:
+bash
+ls /etc/netplan/
 
 
-/etc/netplan/00-installer-config.yaml
+Normalmente o arquivo será algo como:
 
+* 00-installer-config.yaml
 
-Abra o arquivo com um editor de texto:
+Edite o arquivo:
 
 bash
 sudo nano /etc/netplan/00-installer-config.yaml
@@ -59,124 +53,104 @@ sudo nano /etc/netplan/00-installer-config.yaml
 
 ---
 
-## 📝 3️⃣ Exemplo de configuração de IP estático
+## ✍️ 3. Configuração de IP Fixo + DNS Manual
 
-Substitua ens33 pelo nome da sua interface e ajuste IP, gateway e DNS conforme sua rede:
+> ⚠️ **Atenção:** YAML é sensível à indentação. Use **apenas espaços**, nunca TAB.
 
 yaml
 network:
   version: 2
   renderer: networkd
   ethernets:
-    ens33:
+    enp0s3:
       dhcp4: no
       addresses:
-        - 172.16.0.252/24
-      gateway4: 172.16.0.1
+        - 172.16.0.253/24
+        - 172.16.0.254/24
+      routes:
+        - to: default
+          via: 172.16.0.254
       nameservers:
         addresses:
+          - 172.16.0.254
+          - 172.16.0.253
           - 8.8.8.8
-          - 1.1.1.1
 
 
-⚠️ **Atenção:** O arquivo YAML é sensível à indentação.
-Use **somente espaços**, **nunca TAB**.
+🔁 **Substitua enp0s3 pelo nome real da sua interface**.
 
 ---
 
-## 🚀 4️⃣ Aplicando as mudanças
+## 💾 4. Salvar e aplicar a configuração
 
-Após salvar o arquivo (Ctrl + O, Enter, Ctrl + X), execute:
+No editor **nano**:
+
+* Ctrl + O → Enter (salvar)
+* Ctrl + X → sair
+
+Aplicar as configurações:
 
 bash
 sudo netplan apply
 
 
-Se quiser testar antes de aplicar definitivamente:
+Para depuração:
 
 bash
-sudo netplan try
+sudo netplan apply --debug
 
-
-(Se algo der errado, ele reverte automaticamente em 120 segundos.)
 
 ---
 
-## ✅ 5️⃣ Verificando a nova configuração
+## ✅ 5. Testes e validação
 
-Confirme o IP:
+### 📡 Verificar IP configurado
 
 bash
 ip a
 
 
-Teste a conectividade:
+---
+
+### 🌐 Testar conectividade com o gateway
 
 bash
-ping -c 4 8.8.8.8
-ping -c 4 google.com
+ping 172.16.0.254
 
 
 ---
 
-## 🧩 6️⃣ Dicas extras
-
-* Para reiniciar completamente o serviço de rede:
-
-  bash
-  sudo systemctl restart systemd-networkd
-  
-* Para verificar logs da rede:
-
-  bash
-  sudo journalctl -u systemd-networkd --since "5 minutes ago"
-  
-* Para listar todas as configurações Netplan aplicadas:
-
-  bash
-  sudo netplan get
-  
-
----
-
-## 🧠 7️⃣ Exemplo completo de ambiente local
-
-| Interface | IP Estático  | Gateway    | DNS Primário | DNS Secundário |
-| --------- | ------------ | ---------- | ------------ | -------------- |
-| ens33     | 172.16.0.252 | 172.16.0.1 | 8.8.8.8      | 1.1.1.1        |
-
----
-
-## 🧾 Autor e Créditos
-
-**Autor:** [Rodrigo](https://github.com/seuusuario)
-**Função:** SysAdmin & DevOps
-**Versões Suportadas:** Ubuntu Server 18.04, 20.04, 22.04, 24.04
-**Licença:** MIT
-
----
-
-💡 *Este guia pode ser incluído em qualquer repositório de scripts de infraestrutura (Zabbix, Bind9, Proxmox, etc.).*
-
-
-
----
-
-## 💾 Como adicionar no GitHub
-
-1️⃣ Crie o arquivo:
-bash
-nano README.md
-
-
-2️⃣ Cole o conteúdo acima e salve (Ctrl + O, Enter, Ctrl + X).
-
-3️⃣ Suba pro seu repositório:
+### 🌎 Testar resolução DNS
 
 bash
-git add README.md
-git commit -m "Adicionado guia de IP estático no Ubuntu Server"
-git push origin main
+ping google.com
 
 
+---
 
+### 🔎 Verificar DNS ativos
+
+bash
+resolvectl status
+
+
+---
+
+## ⚠️ Observações Importantes
+
+* ❌ **Não edite** /etc/resolv.conf manualmente
+* ✔️ O Netplan gerencia automaticamente a rede
+* 🔐 Em servidores remotos, cuidado para não perder acesso SSH
+
+---
+
+## 📚 Referências
+
+* Documentação oficial Netplan: [https://netplan.io/](https://netplan.io/)
+* Ubuntu Server 24.04 LTS
+
+---
+
+🚀 **Configuração concluída com sucesso!**
+
+Se este guia te ajudou, considere deixar uma ⭐ no repositório.
